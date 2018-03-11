@@ -1,0 +1,53 @@
+types_dictionary = {
+    # https://developers.google.com/tag-manager/api/v2/tag-dictionary-reference
+    "html": "Custom HTML",
+    "img": "Custom Image",
+    "lcl": "Link Click",
+    "fsl": "Form Submit",
+    "cl": "Click",
+    "tl": "Timer Listener",
+    "jel": "JavaScript Error",
+    "hl": "History Listener",
+    "flc": "DoubleClick Floodlight Counter",
+    "fls": "DoubleClick Floodlight Sales",
+    "mpm": "Mediaplex - IFRAME MCT Tag",
+    "mpr": "Mediaplex - Standard IMG ROI Tag",
+    "tc": "Turn Conversion Tracking",
+    "asp": "AdRoll Smart Pixel",
+    "sp": "AdWords Remarketing",
+    "tdc": "Turn Data Collection",
+    "ms": "Marin Software",
+    "_ta": "AdAdvisor",
+    "bzi": "Bizo Insight",
+    "m6d": "Dstillery Universal Pixel",
+    "vdc": "VisualDNA Conversion Tag",
+    "ua": "Universal Analytics",
+    "ga": "Classic Google Analytics",
+    "cts": "Click Tale Standard",
+    "csm": "comScore Unified Digital Measurement",
+    "awct": "AdWords Conversion Tracking",
+    "_fc": "Function Call",
+    # https://developers.google.com/tag-manager/api/v2/variable-dictionary-reference
+    "k": "1st Party Cookie",
+    "aev": "Auto-Event Variable",
+    "c": "Constant",
+    "ctv": "Container Version",
+    "e": "Custom Event Variable",
+    "jsm": "Custom JavaScript",
+    "v": "dataLayer Variable",
+    "dbg": "Debug Mode",
+    "d": "DOM Element",
+    "f": "HTTP Referrer",
+    "j": "JavaScript Variable",
+    "smm": "Lookup Table",
+    "r": "Random Number",
+    "u": "URL",
+    "gas": "Google Analytics Settings"
+}
+
+filtered_parameters = [
+    "overrideGaSettings",
+    "trackType",
+    "varType",
+    "dataLayerVersion"
+]

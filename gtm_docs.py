@@ -3,6 +3,7 @@ import json
 from google.oauth2 import service_account
 from google.auth.transport.requests import AuthorizedSession
 from formatter import MDFormatter
+from dictionary import types_dictionary, filtered_parameters
 
 class GTMDocs:
     '''
@@ -131,6 +132,9 @@ class GTMDocs:
             if 'value' in param and param['value'] == 'false':
                 continue
 
+            if param['key'] in filtered_parameters:
+                continue
+
             if param['key'] == 'html':
                 param['value'] = 'custom code'
 
@@ -207,10 +211,12 @@ class GTMDocs:
             if 'filter' in element:
                 element['filter'] = self._process_filters(element['filter'])
             elif 'customEventFilter' in element:
-                element['filter'] = self._process_filters(element['customEventFilter'])
+                element['filter'] = self._process_filters(
+                    element['customEventFilter'])
         elif 'variableId' in element:
             element['category'] = 'variable'
         
+        element['type'] = types_dictionary.get(element['type'], element['type'])
         element['notes'] = element.get('notes', '')
         element['parameter'] = self._filter_params(element.get('parameter', []))
 
