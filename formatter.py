@@ -1,10 +1,18 @@
 import re
 
 class MDFormatter:
+    '''
+    Markdown formatter for the GTMDocs class to create markdown document
+    from list of elements (tags, triggers and variables).
+
+    Only the doc() method is intended for called publicly, like:
+        markdown = MDFormatter().doc(elements)
+    '''
+
     def __init__(self):
         pass
     
-    def anchorize(self, name):
+    def _anchorize(self, name):
         '''Transform from "Element Name" to "element-name" format.
         
         Params:
@@ -15,7 +23,7 @@ class MDFormatter:
 
         return re.sub(r'\s+', '-', name.lower().replace('-', ''))
 
-    def md_headline(self, name):
+    def _md_headline(self, name):
         '''
         Create markdown section for element headline.
         
@@ -26,16 +34,16 @@ class MDFormatter:
         Returns: markdown string for headline with anchor included
         '''
 
-        return '''###<a name="{0}"/>{1}'''.format(self.anchorize(name), name)
+        return '''###<a name="{0}"/>{1}'''.format(self._anchorize(name), name)
 
-    def md_notes(self, notes, url):
+    def _md_notes(self, notes, url):
         if len(notes) == 0:
             return '''*No description* <small>
                 [view on GTM]({})</small>'''.format(url)
         else:
             return '''{} <small>[view on GTM]({})</small>'''.format(notes, url)
 
-    def md_key_value(self, key, value):
+    def _md_key_value(self, key, value):
         '''
         Create markdown section with a key-value pair in a single line.
         
@@ -47,7 +55,7 @@ class MDFormatter:
 
         return '**{}:** {}'.format(key, value)
 
-    def md_list(self, items, title):
+    def _md_list(self, items, title):
         '''
         Create markdown representation of unordered list. The function 
         takes a list of item dicts, which should contain 'key', 'value'
@@ -80,7 +88,7 @@ class MDFormatter:
         else:
             return '\n'.join(parts)
 
-    def md_section(self, element):
+    def _md_section(self, element):
         '''
         Create a markdown section for an element dict.
 
@@ -91,20 +99,20 @@ class MDFormatter:
         '''
 
         sections = []
-        sections.append(self.md_headline(element['name']))
-        sections.append(self.md_notes(
+        sections.append(self._md_headline(element['name']))
+        sections.append(self._md_notes(
             element['notes'], element['tagManagerUrl']))
-        sections.append(self.md_key_value('Type', element['type']))
+        sections.append(self._md_key_value('Type', element['type']))
         if 'parameter' in element:
-            stripped = self.strip_variables(element['parameter'])
-            sections.append(self.md_list(stripped, 'Parameters'))
+            stripped = self._strip_variables(element['parameter'])
+            sections.append(self._md_list(stripped, 'Parameters'))
         if element['category'] == 'tag':
-            stripped = self.strip_variables(element['triggers'])
-            sections.append(self.md_list(stripped, 'Triggers'))
+            stripped = self._strip_variables(element['triggers'])
+            sections.append(self._md_list(stripped, 'Triggers'))
 
         return '\n\n'.join(sections)
 
-    def markdown(self, elements):
+    def doc(self, elements):
         '''
         Chain together markdown formatted strings for elements in the 
         given element list, and return the complete markdown document.
@@ -124,21 +132,21 @@ class MDFormatter:
 
         md_doc = ['## Tags']
         for tag in tags:
-            md_doc.append(self.md_section(tag))
+            md_doc.append(self._md_section(tag))
 
         md_doc.append('## Triggers')
         for trigger in triggers:
-            md_doc.append(self.md_section(trigger))
+            md_doc.append(self._md_section(trigger))
 
         md_doc.append('## Variables')
         for variable in variables:
-            md_doc.append(self.md_section(variable))
+            md_doc.append(self._md_section(variable))
 
         md = '\n\n'.join(md_doc)
 
         return md
 
-    def strip_variables(self, items):
+    def _strip_variables(self, items):
         '''
         Check in a list of items if item values are in {{ Variable }} 
         format, and replace them with the trimmed name and add the
@@ -156,6 +164,6 @@ class MDFormatter:
                 match = re.match('^{{(.*)}}$', item['value'])
                 if match:
                     item['value'] = match.group(1)
-                    item['anchor'] = self.anchorize(item['value'])
+                    item['anchor'] = self._anchorize(item['value'])
             updated.append(item)
         return updated
