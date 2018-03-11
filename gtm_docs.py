@@ -168,10 +168,9 @@ class GTMDocs:
             negated = [arg['value'] for arg in trig_filter['parameter']
                        if arg['key'] == 'negate']
             
-            if len(negated) == 1:
-                new_filter['negated'] = negated[0]
-            else:
-                new_filter['negated'] = 'false'
+            if len(negated) == 1 and negated[0] == 'true':
+                new_filter['relation'] = 'not {}'.format(new_filter['relation'])
+
             updated_filters.append(new_filter)
 
         return updated_filters
@@ -197,7 +196,7 @@ class GTMDocs:
             'notes',
             'parameter',
             'tagManagerUrl',
-            'type',
+            'type'
         ]
 
         if 'tagId' in element:

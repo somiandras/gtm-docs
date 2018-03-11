@@ -63,10 +63,9 @@ class MDFormatter:
         will be ignored).
 
         Params:
-        items (list): list of dicts with properties of key, value and 
-        anchor
-        title (string): the title of the list (optional)
-        indent (int): number of tabs before bullets (default = 0)
+            items (list): list of dicts with key, value and anchor
+            title (string): the title of the list (optional)
+            indent (int): number of tabs before bullets (default: 0)
 
         Returns: markdown formatted string of the list
         '''
@@ -75,29 +74,36 @@ class MDFormatter:
             headline = '**{}**\n'.format(title)
             parts = [headline]
         else:
-            parts = ['\n']
+            parts = ['']
 
         for item in items:
             # Start the line with necessary indent and a '-' for bullets
             bullet = ' ' * 4 * indent + '- '
             line = [bullet]
 
+            if 'key' in item and 'kanchor' in item:
+                # Put link on the key
+                line.append('[{}](#{})'.format(item['key'], item['kanchor']))
+            elif 'key' in item:
+                # No link on the key
+                line.append(item['key'])
+
             if 'key' in item and 'relation' in item:
                 # This is comparing something, eg. in a filter
-                line.append('{} *{}* '.format(item['key'], item['relation']))
+                line.append(' *{}* '.format(item['relation']))
             elif 'key' in item:
-                # Simple key: value line
-                line.append('{}: '.format(item['key']))
+                # No comparison just colon
+                line.append(': ')
 
-            # Add link to the value text
-            if 'value' in item and 'anchor' in item:
-                line.append('[{}](#{})'.format(item['value'], item['anchor']))
-            # Simple value without link, add string in quotes
+            if 'value' in item and 'vanchor' in item:
+                # Add link to the value text
+                line.append('[{}](#{})'.format(item['value'], item['vanchor']))
             elif 'value' in item:
+                # Simple value without link, add string in quotes
                 line.append('"{}"'.format(item['value']))
             
-            # Some kind of list in list, add it with indentation
             if 'list' in item:
+                # Some kind of list in list, add it with indentation
                 line.append(self._md_list(item['list'], indent=1))
 
             parts.append(''.join(line))
@@ -134,13 +140,14 @@ class MDFormatter:
             if 'triggers' in element:
                 anchorized_list = []
                 for trigger in element['triggers']:
-                    trigger['anchor'] = self._anchorize(trigger['value'])
+                    trigger['vanchor'] = self._anchorize(trigger['value'])
                     anchorized_list.append(trigger)
                 sections.append(self._md_list(anchorized_list, 'Triggers'))
 
         if element['category'] == 'trigger':
             if 'filter' in element:
-                sections.append(self._md_list(element['filter'], 'Filters'))
+                stripped = self._strip_variables(element['filter'])
+                sections.append(self._md_list(stripped, 'Filters'))
 
         return '\n\n'.join(sections)
 
@@ -192,10 +199,15 @@ class MDFormatter:
 
         updated = []
         for item in items:
+            if 'key' in item:
+                match = re.match('^{{(.*)}}$', item['key'])
+                if match:
+                    item['key'] = match.group(1)
+                    item['kanchor'] = self._anchorize(item['key'])
             if 'value' in item:
                 match = re.match('^{{(.*)}}$', item['value'])
                 if match:
                     item['value'] = match.group(1)
-                    item['anchor'] = self._anchorize(item['value'])
+                    item['vanchor'] = self._anchorize(item['value'])
             updated.append(item)
         return updated
