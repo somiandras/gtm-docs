@@ -7,11 +7,12 @@ from formatter import MDFormatter
 class GTMDocs:
     '''
     Methods to connect to GTM API, download data of a given container
-    and output it into a human readable documentation format eg. markdown.
+    and export it into a human readable documentation format (currently
+    markdown).
 
     Methods (chainable):
 
-    - GTMDocs.connect: connect to GTM API
+    - GTMDocs.connect: connect to GTM API with a service account
     - GTMDocs.download: download data for the given container
     - GTMDocs.save: save the docs to the given file
     '''
@@ -22,9 +23,9 @@ class GTMDocs:
     def connect(self, credentials):
         '''
         Create authorized session to GTM API with the downloaded
-        credentials. Credentials must be provided as a path to the 
-        downloaded json credentials file. The connection is with read-
-        only scope.
+        credentials for service account. Credentials must be provided 
+        as a path to the downloaded json credentials file. The 
+        connection is with read-only scope.
 
         Params:
             credentials (string): path to credentials json
@@ -129,10 +130,51 @@ class GTMDocs:
         for param in params:
             if 'value' in param and param['value'] == 'false':
                 continue
+
             if param['key'] == 'html':
-                param['value'] = '[custom code]'
+                param['value'] = 'custom code'
+
+            if 'list' in param:
+                transformed_list = []
+                for item in param['list']:
+                    if item['type'] == 'map':
+                        new_item = {}
+                        new_item['key'] = item['map'][0]['value']
+                        new_item['value'] = item['map'][1]['value']
+                        transformed_list.append(new_item)
+                param['list'] = transformed_list
             filtered.append(param)
+
         return filtered
+
+    def _process_filters(self, filters):
+        '''
+        Collapse trigger filters and customEventFilters into one dict
+        to use later in formatter.
+
+        Params:
+            filters (list): list of filters from trigger
+        
+        Returns: updated list with single dicts for each filter
+        '''
+        updated_filters = []
+        for trig_filter in filters:
+            new_filter = {}
+            new_filter['relation'] = trig_filter['type']
+            new_filter['key'] = [arg['value'] for arg in trig_filter['parameter']
+                                   if arg['key'] == 'arg0'][0]
+            new_filter['value'] = [arg['value'] for arg in trig_filter['parameter']
+                                   if arg['key'] == 'arg1'][0]
+            negated = [arg['value'] for arg in trig_filter['parameter']
+                       if arg['key'] == 'negate']
+            
+            if len(negated) == 1:
+                new_filter['negated'] = negated[0]
+            else:
+                new_filter['negated'] = 'false'
+            updated_filters.append(new_filter)
+
+        return updated_filters
 
     def _process_element(self, element):
         '''
@@ -163,6 +205,10 @@ class GTMDocs:
             element['triggers'] = self._get_triggers(element['firingTriggerId'])
         elif 'triggerId' in element:
             element['category'] = 'trigger'
+            if 'filter' in element:
+                element['filter'] = self._process_filters(element['filter'])
+            elif 'customEventFilter' in element:
+                element['filter'] = self._process_filters(element['customEventFilter'])
         elif 'variableId' in element:
             element['category'] = 'variable'
         

@@ -55,7 +55,7 @@ class MDFormatter:
 
         return '**{}:** {}'.format(key, value)
 
-    def _md_list(self, items, title):
+    def _md_list(self, items, title=None, indent=0):
         '''
         Create markdown representation of unordered list. The function 
         takes a list of item dicts, which should contain 'key', 'value'
@@ -65,32 +65,53 @@ class MDFormatter:
         Params:
         items (list): list of dicts with properties of key, value and 
         anchor
-        title (string): the title of the list
+        title (string): the title of the list (optional)
+        indent (int): number of tabs before bullets (default = 0)
 
         Returns: markdown formatted string of the list
         '''
 
-        headline = '**{}**\n'.format(title)
-        parts = [headline]
+        if title:
+            headline = '**{}**\n'.format(title)
+            parts = [headline]
+        else:
+            parts = ['\n']
+
         for item in items:
-            line = ['- ']
-            if 'key' in item:
+            # Start the line with necessary indent and a '-' for bullets
+            bullet = ' ' * 4 * indent + '- '
+            line = [bullet]
+
+            if 'key' in item and 'relation' in item:
+                # This is comparing something, eg. in a filter
+                line.append('{} *{}* '.format(item['key'], item['relation']))
+            elif 'key' in item:
+                # Simple key: value line
                 line.append('{}: '.format(item['key']))
-            
+
+            # Add link to the value text
             if 'value' in item and 'anchor' in item:
                 line.append('[{}](#{})'.format(item['value'], item['anchor']))
+            # Simple value without link, add string in quotes
             elif 'value' in item:
-                line.append('{}'.format(item['value']))
+                line.append('"{}"'.format(item['value']))
+            
+            # Some kind of list in list, add it with indentation
+            if 'list' in item:
+                line.append(self._md_list(item['list'], indent=1))
+
             parts.append(''.join(line))
 
         if len(parts) == 1:
-            return '{}: *None*'.format(parts[0].strip())
+            # No items added besides the title and/or new line
+            return '\n'
         else:
             return '\n'.join(parts)
 
     def _md_section(self, element):
         '''
-        Create a markdown section for an element dict.
+        Create a markdown section for an element dict with headline and
+        content like notes, parameter or filter list, etc.
 
         Params:
             element (dict): the element to create markdown from
@@ -103,15 +124,23 @@ class MDFormatter:
         sections.append(self._md_notes(
             element['notes'], element['tagManagerUrl']))
         sections.append(self._md_key_value('Type', element['type']))
+        
         if 'parameter' in element:
             stripped = self._strip_variables(element['parameter'])
-            sections.append(self._md_list(stripped, 'Parameters'))
+            sorted_list = sorted(stripped, key=lambda x: x['key'])
+            sections.append(self._md_list(sorted_list, 'Parameters'))
+        
         if element['category'] == 'tag':
-            updated = []
-            for trigger in element['triggers']:
-                trigger['anchor'] = self._anchorize(trigger['value'])
-                updated.append(trigger)
-            sections.append(self._md_list(updated, 'Triggers'))
+            if 'triggers' in element:
+                anchorized_list = []
+                for trigger in element['triggers']:
+                    trigger['anchor'] = self._anchorize(trigger['value'])
+                    anchorized_list.append(trigger)
+                sections.append(self._md_list(anchorized_list, 'Triggers'))
+
+        if element['category'] == 'trigger':
+            if 'filter' in element:
+                sections.append(self._md_list(element['filter'], 'Filters'))
 
         return '\n\n'.join(sections)
 
