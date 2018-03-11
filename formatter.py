@@ -23,6 +23,24 @@ class MDFormatter:
 
         return re.sub(r'\s+', '-', name.lower().replace('-', ''))
 
+    def _camel_to_title(self, string):
+        '''
+        Transform string from "camelCase" to "Title Case" without breaking
+        all-caps words (eg. HTML or URL).
+
+        Params:
+            string (string): string to transform
+        
+        Returns: transformed string
+        '''
+
+        if string.istitle():
+            return string
+        else:
+            words = re.sub(r'([^\s])([A-Z][^A-Z]+)',
+                           r'\1 \2', string).strip().split(' ')
+            return ' '.join([word[0].upper() + word[1:] for word in words])
+
     def _md_headline(self, name):
         '''
         Create markdown section for element headline.
@@ -81,6 +99,9 @@ class MDFormatter:
             bullet = ' ' * 4 * indent + '- '
             line = [bullet]
 
+            if 'key' in item:
+                item['key'] = self._camel_to_title(item['key'])
+
             if 'key' in item and 'kanchor' in item:
                 # Put link on the key
                 line.append('[{}](#{})'.format(item['key'], item['kanchor']))
@@ -127,8 +148,11 @@ class MDFormatter:
 
         sections = []
         sections.append(self._md_headline(element['name']))
+
         sections.append(self._md_notes(
             element['notes'], element['tagManagerUrl']))
+
+        element['type'] = self._camel_to_title(element['type']) 
         sections.append(self._md_key_value('Type', element['type']))
         
         if 'parameter' in element:
