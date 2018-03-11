@@ -1,4 +1,5 @@
 import re
+from markdown import markdown
 
 class MDFormatter:
     '''
@@ -235,3 +236,8 @@ class MDFormatter:
                     item['vanchor'] = self._anchorize(item['value'])
             updated.append(item)
         return updated
+
+class HTMLFormatter(MDFormatter):
+    def doc(self, elements):
+        md = super().doc(elements)
+        return markdown(md)

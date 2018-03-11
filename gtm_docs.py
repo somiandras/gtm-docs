@@ -2,14 +2,14 @@ import re
 import json
 from google.oauth2 import service_account
 from google.auth.transport.requests import AuthorizedSession
-from formatter import MDFormatter
+from formatter import MDFormatter, HTMLFormatter
 from dictionary import types_dictionary, filtered_parameters
 
 class GTMDocs:
     '''
     Methods to connect to GTM API, download data of a given container
     and export it into a human readable documentation format (currently
-    markdown).
+    markdown or HTML).
 
     Methods (chainable):
 
@@ -94,6 +94,8 @@ class GTMDocs:
 
         if format == 'markdown':
             self.formatter = MDFormatter()
+        elif format == 'html':
+            self.formatter = HTMLFormatter()
 
         doc = self.formatter.doc(self.elements)
         with open(filename, 'w') as file:
@@ -101,7 +103,7 @@ class GTMDocs:
 
     def _get_triggers(self, ids):
         '''
-        Collect trigger names for ids of firing triggers
+        Collect trigger names for ids of firing triggers.
 
         Params:
             ids (list): list of trigger ids
@@ -161,6 +163,7 @@ class GTMDocs:
         
         Returns: updated list with single dicts for each filter
         '''
+
         updated_filters = []
         for trig_filter in filters:
             new_filter = {}
