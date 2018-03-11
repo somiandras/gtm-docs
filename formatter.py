@@ -107,8 +107,11 @@ class MDFormatter:
             stripped = self._strip_variables(element['parameter'])
             sections.append(self._md_list(stripped, 'Parameters'))
         if element['category'] == 'tag':
-            stripped = self._strip_variables(element['triggers'])
-            sections.append(self._md_list(stripped, 'Triggers'))
+            updated = []
+            for trigger in element['triggers']:
+                trigger['anchor'] = self._anchorize(trigger['value'])
+                updated.append(trigger)
+            sections.append(self._md_list(updated, 'Triggers'))
 
         return '\n\n'.join(sections)
 
