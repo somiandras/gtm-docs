@@ -159,7 +159,8 @@ class MDFormatter:
         if 'parameter' in element:
             stripped = self._strip_variables(element['parameter'])
             sorted_list = sorted(stripped, key=lambda x: x['key'])
-            sections.append(self._md_list(sorted_list, 'Parameters'))
+            if len(sorted_list) > 0:
+                sections.append(self._md_list(sorted_list, 'Parameters'))
         
         if element['category'] == 'tag':
             if 'triggers' in element:
@@ -194,7 +195,8 @@ class MDFormatter:
         variables = [
             elem for elem in sorted_elements if elem['category'] == 'variable']
 
-        md_doc = ['## Tags']
+        md_doc = ['# GTM Documentation']
+        md_doc.append('## Tags')
         for tag in tags:
             md_doc.append(self._md_section(tag))
 

@@ -6,3 +6,4 @@ credentials
 *.md
 __pycache__
 test.*
+*.pyc
